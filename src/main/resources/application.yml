@@ -1,0 +1,10 @@
+spring.application.name: covid-19-api
+server.port: 8081
+
+spring.data.mongodb:
+  host: localhost
+  port: 27017
+  database: covid-19
+
+#logging.level.org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+#logging.leve.root: DEBUG
