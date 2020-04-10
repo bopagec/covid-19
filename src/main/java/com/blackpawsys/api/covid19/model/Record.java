@@ -22,4 +22,8 @@ public class Record {
   private String lastUpdated;
   private Long confirmed;
   private Long deaths;
+  private Long newCases;
+  private Long newDeaths;
+  private String lat;
+  private String longt;
 }

@@ -7,10 +7,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,29 +35,34 @@ public class UpdateController {
 
   @GetMapping("/fetch")
   public String fetchAllRecords() {
+    log.info("fetchAllRecords method called.");
     dataService.deleteAll();
     log.info("all records deleted.");
     LocalDate currLocalDate = firstDate;
 
     fetchAndSave(currLocalDate);
 
-    return "all records fetched";
+    return "done";
   }
 
-
+  @Scheduled(cron = "* * 5 * * *")
+ // @PostConstruct
   @GetMapping("/update")
   public String updateRecords() {
-    List<Record> records = dataService.findAll(Sort.by(Direction.DESC, "lastRecord"));
+    log.info("update method called.");
+    List<Record> records = dataService.findAll(Sort.by("_id").descending());
 
     if (!records.isEmpty()) {
-      Record record = records.get(records.size() - 1);
+      Record record = records.get(0);
       LocalDate recordDate = LocalDate.parse(record.getLastUpdated(), RecordUtil.FORMATTER);
       if (recordDate.isBefore(LocalDate.now())) {
         fetchAndSave(recordDate);
         return "records updated.";
       }
     }
-
+    else{
+      fetchAllRecords();
+    }
     return "no new records found.";
   }
 
@@ -66,6 +74,7 @@ public class UpdateController {
       try {
         String recordStr = restTemplate.getForObject(RecordUtil.createReportUrl(date), String.class);
         List<Record> recordList = RecordUtil.parseRecord(recordStr, date);
+        updateRecordFields(recordList, date);
 
         dataService.saveAll(recordList);
         log.info("saved: {} records from {}", recordList.size(), date.toString());
@@ -80,6 +89,23 @@ public class UpdateController {
         date = date.plusDays(1);
       }
     }
+  }
+
+  public List<Record> updateRecordFields(List<Record> records, LocalDate date){
+
+    records.stream().forEach(record -> {
+      dataService.findByCountry(record, RecordUtil.FORMATTER.format(date.minusDays(1)))
+          .ifPresent(oldRecord -> {
+            if(oldRecord.getConfirmed() != null){
+              record.setNewCases(record.getConfirmed() - oldRecord.getConfirmed());
+            }
+            if(oldRecord.getDeaths() != null){
+              record.setNewDeaths(record.getDeaths() - oldRecord.getDeaths());
+            }
+          });
+    });
+
+    return records;
   }
 
 }

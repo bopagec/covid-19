@@ -3,6 +3,7 @@ package com.blackpawsys.api.covid19.Util;
 import com.blackpawsys.api.covid19.model.Record;
 import java.io.IOException;
 import java.io.StringReader;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -20,7 +21,6 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class RecordUtil {
-
   private static final String UTF8_BOM = "\uFEFF";
   private static final String FILE_TYPE = "csv";
   public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("MM-dd-yyyy");
@@ -37,6 +37,15 @@ public class RecordUtil {
 
     return sb.toString();
   }
+  public static String formatLatLong(String val){
+    int i = StringUtils.indexOf(val, ".");
+
+    if(i > 1 ){
+      return StringUtils.substring(val, 0, i + 2);
+    }
+
+    return val;
+  }
 
   public static List<Record> parseRecord(String recordStr, LocalDate lastUpdate) throws IOException {
     StringReader in = new StringReader(removeUTF8BOM(recordStr));
@@ -51,6 +60,8 @@ public class RecordUtil {
         String combinedKey = (rec.isMapped("Combined_Key") ? rec.get("Combined_Key") : null);
         Long confirmed = (rec.isMapped("Confirmed") && !StringUtils.isEmpty(rec.get("Confirmed"))) ? Long.parseLong(rec.get("Confirmed")) : null;
         Long deaths = (rec.isMapped("Deaths") && !StringUtils.isEmpty(rec.get("Deaths"))) ? Long.parseLong(rec.get("Deaths")) : null;
+        String lat = rec.isMapped("Lat") ? formatLatLong(rec.get("Lat")) : null;
+        String longt = rec.isMapped("Long_") ? formatLatLong(rec.get("Long_")) : null;
 
         List<String> combinedKeyList = Collections.emptyList();
 
@@ -69,7 +80,6 @@ public class RecordUtil {
           country = state;
         }
 
-
         Record record = Record.builder()
             .state(state)
             .country(country)
@@ -77,6 +87,8 @@ public class RecordUtil {
             .confirmed(confirmed)
             .deaths(deaths)
             .lastUpdated(lastUpdate.format(FORMATTER))
+            .lat(lat)
+            .longt(longt)
             .build();
 
         recordList.add(record);
