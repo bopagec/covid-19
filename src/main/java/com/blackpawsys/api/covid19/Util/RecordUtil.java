@@ -6,20 +6,26 @@ import java.io.StringReader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class RecordUtil {
 
   private static final String UTF8_BOM = "\uFEFF";
   private static final String FILE_TYPE = "csv";
   public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("MM-dd-yyyy");
   private static String reportUrl = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/";
+  private static List<String> OVERSEAS_TERRITORY_GOVERN_ = new ArrayList<>(Arrays.asList("denmark", "france", "netherlands", "united kingdom"));
 
   public static String createReportUrl(LocalDate currLocalDate) {
     StringBuilder sb = new StringBuilder();
@@ -40,19 +46,37 @@ public class RecordUtil {
 
       Iterable<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
       for (CSVRecord rec : records) {
-        String state = (rec.isMapped("Province/State") ? rec.get("Province/State") : null);
-        String country = (rec.isMapped("Country/Region") ? rec.get("Country/Region") : null);
+        String state = (rec.isMapped("Province/State") ? rec.get("Province/State") : (rec.isMapped("Province_State") ? rec.get("Province_State") : null));
+        String country = (rec.isMapped("Country/Region") ? rec.get("Country/Region") : (rec.isMapped("Country_Region") ? rec.get("Country_Region") : null));
         String combinedKey = (rec.isMapped("Combined_Key") ? rec.get("Combined_Key") : null);
         Long confirmed = (rec.isMapped("Confirmed") && !StringUtils.isEmpty(rec.get("Confirmed"))) ? Long.parseLong(rec.get("Confirmed")) : null;
         Long deaths = (rec.isMapped("Deaths") && !StringUtils.isEmpty(rec.get("Deaths"))) ? Long.parseLong(rec.get("Deaths")) : null;
 
+        List<String> combinedKeyList = Collections.emptyList();
+
+        if(StringUtils.isEmpty(state) && StringUtils.isEmpty(combinedKey)){
+          combinedKey = country;
+        }
+        else if(state.equalsIgnoreCase(country) && StringUtils.isEmpty(combinedKey)){
+          combinedKey = country;
+        }
+        if(!StringUtils.isEmpty(combinedKey)){
+          String[] keys = StringUtils.split(combinedKey, ",");
+          combinedKeyList = Stream.of(keys).filter(key -> !StringUtils.isEmpty(key)).collect(Collectors.toList());
+        }
+
+        if(!StringUtils.isEmpty(state) && OVERSEAS_TERRITORY_GOVERN_.contains(country.toLowerCase())){
+          country = state;
+        }
+
+
         Record record = Record.builder()
             .state(state)
             .country(country)
-            .combinedKey(combinedKey)
+            .combinedKey(combinedKeyList)
             .confirmed(confirmed)
             .deaths(deaths)
-            .lastUpdated(lastUpdate)
+            .lastUpdated(lastUpdate.format(FORMATTER))
             .build();
 
         recordList.add(record);

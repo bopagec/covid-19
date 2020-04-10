@@ -20,7 +20,7 @@ import org.springframework.web.client.RestTemplate;
 @RestController
 @RequestMapping("/covid-19")
 @Slf4j
-public class Covid19Controller {
+public class UpdateController {
 
   @Autowired
   private Covid19Service dataService;
@@ -48,9 +48,9 @@ public class Covid19Controller {
 
     if (!records.isEmpty()) {
       Record record = records.get(records.size() - 1);
-
-      if (record.getLastUpdated().isBefore(LocalDate.now())) {
-        fetchAndSave(record.getLastUpdated());
+      LocalDate recordDate = LocalDate.parse(record.getLastUpdated(), RecordUtil.FORMATTER);
+      if (recordDate.isBefore(LocalDate.now())) {
+        fetchAndSave(recordDate);
         return "records updated.";
       }
     }
@@ -59,22 +59,25 @@ public class Covid19Controller {
   }
 
   private void fetchAndSave(LocalDate currLocalDate) {
-    while (currLocalDate.isBefore(LocalDate.now())) {
+    LocalDate date = currLocalDate;
+
+    while (date.isBefore(LocalDate.now()) || date.isEqual(LocalDate.now())) {
 
       try {
-        currLocalDate = currLocalDate.plusDays(1);
-        String recordStr = restTemplate.getForObject(RecordUtil.createReportUrl(currLocalDate), String.class);
-        List<Record> recordList = RecordUtil.parseRecord(recordStr, currLocalDate);
+        String recordStr = restTemplate.getForObject(RecordUtil.createReportUrl(date), String.class);
+        List<Record> recordList = RecordUtil.parseRecord(recordStr, date);
 
         dataService.saveAll(recordList);
-        log.info("saved: {} records from {}", recordList.size(), currLocalDate.toString());
+        log.info("saved: {} records from {}", recordList.size(), date.toString());
 
       } catch (HttpClientErrorException e) {
-        log.info(e.getMessage() + ":" + currLocalDate.toString());
+        log.info(e.getMessage() + ":" + date.toString());
       } catch (FileNotFoundException fne) {
         log.info(fne.getMessage());
       } catch (IOException ioe) {
         log.info(ioe.getMessage());
+      } finally {
+        date = date.plusDays(1);
       }
     }
   }
