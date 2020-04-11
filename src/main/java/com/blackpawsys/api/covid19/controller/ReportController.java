@@ -2,6 +2,8 @@ package com.blackpawsys.api.covid19.controller;
 
 import com.blackpawsys.api.covid19.Util.RecordUtil;
 import com.blackpawsys.api.covid19.component.DailyReport;
+import com.blackpawsys.api.covid19.component.Response;
+import com.blackpawsys.api.covid19.dto.DailyReportDataDto;
 import com.blackpawsys.api.covid19.service.Covid19Service;
 import java.time.LocalDate;
 import java.util.List;
@@ -21,14 +23,29 @@ public class ReportController {
   private Covid19Service dataService;
 
   @GetMapping("/{date}")
-  public List<DailyReport> dailyRecord(@PathVariable String date) {
+  public Response<DailyReportDataDto> dailyRecord(@PathVariable String date) {
     log.info("dailyRecord method called: {}", date);
-    return dataService.findByDate(LocalDate.parse(date, RecordUtil.FORMATTER));
+
+    Response<DailyReportDataDto> response = new Response<>();
+    DailyReportDataDto dailyReportDataDto = dataService.findByDate(LocalDate.parse(date, RecordUtil.FORMATTER));
+
+    response.setCode("200");
+    response.setPayload(dailyReportDataDto);
+
+    return response;
   }
 
   @GetMapping("/country/{country}")
-  public List<DailyReport> countryReport(@PathVariable String country) {
+  public Response<DailyReportDataDto> countryReport(@PathVariable String country) {
     log.info("countryReport method called : {}", country);
-    return dataService.findByCountry(country);
+
+    Response<DailyReportDataDto> response = new Response<>();
+
+    DailyReportDataDto dailyReportDataDto = dataService.findByCountry(country);
+
+    response.setCode("200");
+    response.setPayload(dailyReportDataDto);
+
+    return response;
   }
 }

@@ -4,12 +4,15 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.grou
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.newAggregation;
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.sort;
 
+import com.blackpawsys.api.covid19.component.DailyReport;
+import com.blackpawsys.api.covid19.component.Summary;
 import com.blackpawsys.api.covid19.model.Record;
 import java.io.IOException;
 import java.io.StringReader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -115,6 +118,15 @@ public class RecordUtil {
       }
     }
     return recordList;
+  }
+
+  public static Summary createSummary(Collection<DailyReport> collection) {
+    return Summary.builder()
+        .totalConfirmed(collection.stream().mapToLong(value -> value.getConfirmed()).sum())
+        .totalDeaths(collection.stream().mapToLong(value -> value.getDeaths()).sum())
+        .totalNewCases(collection.stream().mapToLong(value -> value.getNewCases()).sum())
+        .totalNewDeaths(collection.stream().mapToLong(value -> value.getNewDeaths()).sum())
+        .build();
   }
 
   private static String removeUTF8BOM(String s) {
