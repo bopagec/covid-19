@@ -1,7 +1,7 @@
 package com.blackpawsys.api.covid19.component;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,10 +15,11 @@ import org.springframework.stereotype.Component;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DailyReport {
+
   private Long confirmed;
   private Long deaths;
   private String country;
   private Long newCases;
   private Long newDeaths;
-  private String lastUpdated;
+  private LocalDate lastUpdated;
 }

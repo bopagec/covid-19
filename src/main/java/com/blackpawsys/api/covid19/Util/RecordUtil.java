@@ -1,46 +1,60 @@
 package com.blackpawsys.api.covid19.Util;
 
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.group;
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.newAggregation;
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.sort;
+
 import com.blackpawsys.api.covid19.model.Record;
 import java.io.IOException;
 import java.io.StringReader;
-import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.GroupOperation;
+import org.springframework.data.mongodb.core.aggregation.MatchOperation;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
 public class RecordUtil {
+
   private static final String UTF8_BOM = "\uFEFF";
   private static final String FILE_TYPE = "csv";
   public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("MM-dd-yyyy");
-  private static String reportUrl = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/";
-  private static List<String> OVERSEAS_TERRITORY_GOVERN_ = new ArrayList<>(Arrays.asList("denmark", "france", "netherlands", "united kingdom"));
+  private static String resourcesUrl;
+  private static List<String> overseasTerritories = new ArrayList<>();
+  private static Map<String, String> countryAbbrMap = new HashMap<>();
+
 
   public static String createReportUrl(LocalDate currLocalDate) {
     StringBuilder sb = new StringBuilder();
 
-    sb.append(reportUrl)
+    sb.append(resourcesUrl)
         .append(currLocalDate.format(FORMATTER))
         .append(".")
         .append(FILE_TYPE);
 
     return sb.toString();
   }
-  public static String formatLatLong(String val){
+
+  public static String formatLatLong(String val) {
     int i = StringUtils.indexOf(val, ".");
 
-    if(i > 1 ){
+    if (i >= 1) {
       return StringUtils.substring(val, 0, i + 2);
     }
 
@@ -64,19 +78,24 @@ public class RecordUtil {
         String longt = rec.isMapped("Long_") ? formatLatLong(rec.get("Long_")) : null;
 
         List<String> combinedKeyList = Collections.emptyList();
+        if (countryAbbrMap.containsKey(state.toLowerCase())) {
+          state = countryAbbrMap.get(state.toLowerCase());
+        }
+        if (countryAbbrMap.containsKey(country.toLowerCase())) {
+          country = countryAbbrMap.get(country.toLowerCase());
+        }
 
-        if(StringUtils.isEmpty(state) && StringUtils.isEmpty(combinedKey)){
+        if (StringUtils.isEmpty(state) && StringUtils.isEmpty(combinedKey)) {
+          combinedKey = country;
+        } else if (state.equalsIgnoreCase(country) && StringUtils.isEmpty(combinedKey)) {
           combinedKey = country;
         }
-        else if(state.equalsIgnoreCase(country) && StringUtils.isEmpty(combinedKey)){
-          combinedKey = country;
-        }
-        if(!StringUtils.isEmpty(combinedKey)){
+        if (!StringUtils.isEmpty(combinedKey)) {
           String[] keys = StringUtils.split(combinedKey, ",");
           combinedKeyList = Stream.of(keys).filter(key -> !StringUtils.isEmpty(key)).collect(Collectors.toList());
         }
 
-        if(!StringUtils.isEmpty(state) && OVERSEAS_TERRITORY_GOVERN_.contains(country.toLowerCase())){
+        if (!StringUtils.isEmpty(state) && overseasTerritories.contains(country.toLowerCase())) {
           country = state;
         }
 
@@ -86,7 +105,7 @@ public class RecordUtil {
             .combinedKey(combinedKeyList)
             .confirmed(confirmed)
             .deaths(deaths)
-            .lastUpdated(lastUpdate.format(FORMATTER))
+            .lastUpdated(lastUpdate)
             .lat(lat)
             .longt(longt)
             .build();
@@ -104,5 +123,38 @@ public class RecordUtil {
     }
 
     return s;
+  }
+
+  public static Aggregation createAggregation(Object criteria, String matchBy, String sortBy, String groupBy) {
+    MatchOperation matchOperation = new MatchOperation(Criteria.where(matchBy).is(criteria));
+
+    GroupOperation groupOperation = group(groupBy)
+        .first("country").as("country")
+        .sum("confirmed").as("confirmed")
+        .sum("deaths").as("deaths")
+        .sum("newCases").as("newCases")
+        .sum("newDeaths").as("newDeaths");
+
+    return newAggregation(
+        matchOperation,
+        groupOperation,
+        sort(Direction.DESC, sortBy)
+    );
+  }
+
+  @Value("${external.resources.url}")
+  public void setResourcesUrl(String url) {
+    resourcesUrl = url;
+  }
+
+  @Value("${overseas.territories}")
+  public void setOverseasTerritories(List<String> list) {
+    overseasTerritories.addAll(list);
+  }
+
+
+  @Value("#{${country.abbr.map}}")
+  public void setCountryAbbrMap(Map<String, String> map) {
+    countryAbbrMap.putAll(map);
   }
 }

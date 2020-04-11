@@ -6,5 +6,10 @@ spring.data.mongodb:
   port: 27017
   database: covid-19
 
+overseas.territories: denmark,france,netherlands,united kingdom
+
+country.abbr.map: "{uk: 'United Kingdom'}"
+
+external.resources.url: "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
 #logging.level.org.springframework.data.mongodb.core.MongoTemplate: DEBUG
 #logging.leve.root: DEBUG

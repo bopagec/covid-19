@@ -2,9 +2,9 @@ package com.blackpawsys.api.covid19.service;
 
 import com.blackpawsys.api.covid19.component.DailyReport;
 import com.blackpawsys.api.covid19.model.Record;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.domain.Sort;
 
 public interface Covid19Service {
 
@@ -12,11 +12,11 @@ public interface Covid19Service {
 
   void saveAll(List<Record> recordList);
 
-  List<Record> findAll(Sort sort);
+  Record findLatestRecord();
 
-  List<DailyReport> findByDate(String date);
+  List<DailyReport> findByDate(LocalDate date);
 
-  Optional<Record> findByCountry(Record record, String date);
+  Optional<Record> findByCountry(Record record, LocalDate date);
 
   List<DailyReport> findByCountry(String country);
 }

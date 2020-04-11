@@ -4,9 +4,11 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.grou
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.newAggregation;
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.sort;
 
+import com.blackpawsys.api.covid19.Util.RecordUtil;
 import com.blackpawsys.api.covid19.component.DailyReport;
 import com.blackpawsys.api.covid19.model.Record;
 import com.blackpawsys.api.covid19.repository.Covid19Repository;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,26 +42,13 @@ public class Covid19ServiceImpl implements Covid19Service {
   }
 
   @Override
-  public List<Record> findAll(Sort sort) {
-    return repository.findAll(sort);
+  public Record findLatestRecord() {
+    return repository.findFirstByOrderByLastUpdatedDesc();
   }
 
   @Override
-  public List<DailyReport> findByDate(String date) {
-    MatchOperation matchOperation = new MatchOperation(Criteria.where("lastUpdated").is(date));
-
-    GroupOperation groupOperation = group("country")
-        .first("country").as("country")
-        .sum("confirmed").as("confirmed")
-        .sum("deaths").as("deaths")
-        .sum("newCases").as("newCases")
-        .sum("newDeaths").as("newDeaths");
-
-    Aggregation aggregation = newAggregation(
-        matchOperation,
-        groupOperation,
-        sort(Direction.DESC, "confirmed")
-    );
+  public List<DailyReport> findByDate(LocalDate date) {
+    Aggregation aggregation = RecordUtil.createAggregation(date, "lastUpdated","confirmed", "country");
 
     AggregationResults<DailyReport> aggregate = mongoTemplate.aggregate(aggregation, Record.class, DailyReport.class);
 
@@ -69,7 +58,7 @@ public class Covid19ServiceImpl implements Covid19Service {
   }
 
   @Override
-  public Optional<Record> findByCountry(Record record, String date) {
+  public Optional<Record> findByCountry(Record record, LocalDate date) {
     List<Record> records = repository.findByCountryAndStateAndLastUpdatedAndLatAndLongt(record.getCountry(), record.getState(), date, record.getLat(), record.getLongt());
 
     if (!records.isEmpty()) {
@@ -81,7 +70,13 @@ public class Covid19ServiceImpl implements Covid19Service {
 
   @Override
   public List<DailyReport> findByCountry(String country) {
-    return repository.findByCountry(country, Sort.by("_id").descending());
+    Aggregation aggregation = RecordUtil.createAggregation(country, "country","lastUpdated" , "lastUpdated");
+
+    AggregationResults<DailyReport> aggregate = mongoTemplate.aggregate(aggregation, Record.class, DailyReport.class);
+
+    List<DailyReport> mappedResults = aggregate.getMappedResults();
+
+    return mappedResults;
   }
 
 }
