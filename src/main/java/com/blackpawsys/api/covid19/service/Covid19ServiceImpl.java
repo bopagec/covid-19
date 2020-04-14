@@ -1,13 +1,11 @@
 package com.blackpawsys.api.covid19.service;
 
 import com.blackpawsys.api.covid19.Util.RecordUtil;
-import com.blackpawsys.api.covid19.component.DailyReport;
-import com.blackpawsys.api.covid19.component.Summary;
+import com.blackpawsys.api.covid19.dto.DailyReportDto;
 import com.blackpawsys.api.covid19.dto.DailyReportDataDto;
 import com.blackpawsys.api.covid19.model.Record;
 import com.blackpawsys.api.covid19.repository.Covid19Repository;
 import java.time.LocalDate;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,40 +39,26 @@ public class Covid19ServiceImpl implements Covid19Service {
   }
 
   @Override
-  public DailyReportDataDto findByDate(LocalDate date) {
-    Aggregation aggregation = RecordUtil.createAggregation(date, "lastUpdated", "confirmed", "country");
+  public List<Record> findByDate(LocalDate date, Optional<String> optGroupBy) {
+    Aggregation aggregation = RecordUtil.createAggregation(date, "lastUpdated", "confirmed", optGroupBy);
 
-    AggregationResults<DailyReport> aggregate = mongoTemplate.aggregate(aggregation, Record.class, DailyReport.class);
+    AggregationResults<Record> aggregate = mongoTemplate.aggregate(aggregation, Record.class, Record.class);
 
-    List<DailyReport> results = aggregate.getMappedResults();
+    List<Record> results = aggregate.getMappedResults();
 
-    return DailyReportDataDto.builder()
-        .dailyReportList(results)
-        .summary(RecordUtil.createSummary(results))
-        .build();
-  }
-
-  @Override
-  public Optional<Record> findByCountry(Record record, LocalDate date) {
-    List<Record> records = repository.findByCountryAndStateAndLastUpdatedAndLatAndLongt(record.getCountry(), record.getState(), date, record.getLat(), record.getLongt());
-
-    if (!records.isEmpty()) {
-      return Optional.of(records.get(0));
-    }
-
-    return Optional.empty();
+    return results;
   }
 
   @Override
   public DailyReportDataDto findByCountry(String country) {
-    Aggregation aggregation = RecordUtil.createAggregation(country, "country", "lastUpdated", "lastUpdated");
+    Aggregation aggregation = RecordUtil.createAggregation(country, "country", "lastUpdated", Optional.of("lastUpdated"));
 
-    AggregationResults<DailyReport> aggregate = mongoTemplate.aggregate(aggregation, Record.class, DailyReport.class);
+    AggregationResults<DailyReportDto> aggregate = mongoTemplate.aggregate(aggregation, Record.class, DailyReportDto.class);
 
-    List<DailyReport> results = aggregate.getMappedResults();
+    List<DailyReportDto> results = aggregate.getMappedResults();
 
     return DailyReportDataDto.builder()
-        .dailyReportList(results)
+        .dailyReportDtoList(results)
         .build();
   }
 

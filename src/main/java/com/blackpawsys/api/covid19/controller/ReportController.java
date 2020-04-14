@@ -1,12 +1,14 @@
 package com.blackpawsys.api.covid19.controller;
 
 import com.blackpawsys.api.covid19.Util.RecordUtil;
-import com.blackpawsys.api.covid19.component.DailyReport;
+import com.blackpawsys.api.covid19.dto.DailyReportDto;
 import com.blackpawsys.api.covid19.component.Response;
 import com.blackpawsys.api.covid19.dto.DailyReportDataDto;
+import com.blackpawsys.api.covid19.model.Record;
 import com.blackpawsys.api.covid19.service.Covid19Service;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,7 +29,13 @@ public class ReportController {
     log.info("dailyRecord method called: {}", date);
 
     Response<DailyReportDataDto> response = new Response<>();
-    DailyReportDataDto dailyReportDataDto = dataService.findByDate(LocalDate.parse(date, RecordUtil.FORMATTER));
+    List<Record> records = dataService.findByDate(LocalDate.parse(date, RecordUtil.FORMATTER), Optional.of("country"));
+    List<DailyReportDto> dailyReportDtoList = RecordUtil.createDailyReportList(records);
+
+    DailyReportDataDto dailyReportDataDto = DailyReportDataDto.builder()
+        .dailyReportDtoList(dailyReportDtoList)
+        .summary(RecordUtil.createSummary(dailyReportDtoList))
+        .build();
 
     response.setCode("200");
     response.setPayload(dailyReportDataDto);

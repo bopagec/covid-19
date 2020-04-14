@@ -1,6 +1,5 @@
 package com.blackpawsys.api.covid19.dto;
 
-import com.blackpawsys.api.covid19.component.DailyReport;
 import com.blackpawsys.api.covid19.component.Summary;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
@@ -18,6 +17,6 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class DailyReportDataDto {
 
-  private List<DailyReport> dailyReportList;
+  private List<DailyReportDto> dailyReportDtoList;
   private Summary summary;
 }

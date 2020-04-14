@@ -4,7 +4,7 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.grou
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.newAggregation;
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.sort;
 
-import com.blackpawsys.api.covid19.component.DailyReport;
+import com.blackpawsys.api.covid19.dto.DailyReportDto;
 import com.blackpawsys.api.covid19.component.Summary;
 import com.blackpawsys.api.covid19.model.Record;
 import java.io.IOException;
@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
@@ -120,7 +121,7 @@ public class RecordUtil {
     return recordList;
   }
 
-  public static Summary createSummary(Collection<DailyReport> collection) {
+  public static Summary createSummary(Collection<DailyReportDto> collection) {
     return Summary.builder()
         .totalConfirmed(collection.stream().mapToLong(value -> value.getConfirmed()).sum())
         .totalDeaths(collection.stream().mapToLong(value -> value.getDeaths()).sum())
@@ -137,21 +138,51 @@ public class RecordUtil {
     return s;
   }
 
-  public static Aggregation createAggregation(Object criteria, String matchBy, String sortBy, String groupBy) {
+  public static List<DailyReportDto> createDailyReportList(List<Record> records){
+    List<DailyReportDto> dailyReportDtos = new ArrayList<>();
+
+    records.stream().forEach(record -> {
+      DailyReportDto report = DailyReportDto.builder()
+          .confirmed(record.getConfirmed())
+          .country(record.getCountry())
+          .deaths(record.getDeaths())
+          .lastUpdated(record.getLastUpdated())
+          .newCases(record.getNewCases())
+          .newDeaths(record.getNewDeaths())
+          .build();
+
+      dailyReportDtos.add(report);
+    });
+
+    return dailyReportDtos;
+  }
+
+  public static Aggregation createAggregation(Object criteria, String matchBy, String sortBy, Optional<String> optGroupBy) {
     MatchOperation matchOperation = new MatchOperation(Criteria.where(matchBy).is(criteria));
 
-    GroupOperation groupOperation = group(groupBy)
-        .first("country").as("country")
-        .sum("confirmed").as("confirmed")
-        .sum("deaths").as("deaths")
-        .sum("newCases").as("newCases")
-        .sum("newDeaths").as("newDeaths");
+    if(optGroupBy.isPresent()){
+      GroupOperation groupOperation = group(optGroupBy.get())
+          .first("country").as("country")
+          .first("lastUpdated").as("lastUpdated")
+          .first("lat").as("lat")
+          .first("longt").as("longt")
+          .sum("confirmed").as("confirmed")
+          .sum("deaths").as("deaths")
+          .sum("newCases").as("newCases")
+          .sum("newDeaths").as("newDeaths");
 
-    return newAggregation(
-        matchOperation,
-        groupOperation,
-        sort(Direction.DESC, sortBy)
-    );
+      return newAggregation(
+          matchOperation,
+          groupOperation,
+          sort(Direction.DESC, sortBy)
+      );
+    }
+    else{
+      return newAggregation(
+          matchOperation,
+          sort(Direction.DESC, sortBy)
+      );
+    }
   }
 
   @Value("${external.resources.url}")

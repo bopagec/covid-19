@@ -1,6 +1,5 @@
 package com.blackpawsys.api.covid19.service;
 
-import com.blackpawsys.api.covid19.component.DailyReport;
 import com.blackpawsys.api.covid19.dto.DailyReportDataDto;
 import com.blackpawsys.api.covid19.model.Record;
 import java.time.LocalDate;
@@ -15,9 +14,7 @@ public interface Covid19Service {
 
   Record findLatestRecord();
 
-  DailyReportDataDto findByDate(LocalDate date);
-
-  Optional<Record> findByCountry(Record record, LocalDate date);
+  List<Record> findByDate(LocalDate date, Optional<String> optGroupBy);
 
   DailyReportDataDto findByCountry(String country);
 }
