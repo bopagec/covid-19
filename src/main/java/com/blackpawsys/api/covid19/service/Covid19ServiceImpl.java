@@ -50,16 +50,14 @@ public class Covid19ServiceImpl implements Covid19Service {
   }
 
   @Override
-  public DailyReportDataDto findByCountry(String country) {
+  public List<Record> findByCountry(String country) {
     Aggregation aggregation = RecordUtil.createAggregation(country, "country", "lastUpdated", Optional.of("lastUpdated"));
 
-    AggregationResults<DailyReportDto> aggregate = mongoTemplate.aggregate(aggregation, Record.class, DailyReportDto.class);
+    AggregationResults<Record> aggregate = mongoTemplate.aggregate(aggregation, Record.class, Record.class);
 
-    List<DailyReportDto> results = aggregate.getMappedResults();
+    List<Record> results = aggregate.getMappedResults();
 
-    return DailyReportDataDto.builder()
-        .dailyReportDtoList(results)
-        .build();
+    return results;
   }
 
 }
