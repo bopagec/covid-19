@@ -4,8 +4,8 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.grou
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.newAggregation;
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.sort;
 
-import com.blackpawsys.api.covid19.dto.DailyReportDto;
 import com.blackpawsys.api.covid19.component.Summary;
+import com.blackpawsys.api.covid19.dto.DailyReportDto;
 import com.blackpawsys.api.covid19.model.Record;
 import java.io.IOException;
 import java.io.StringReader;
@@ -14,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,6 +122,28 @@ public class RecordUtil {
     return recordList;
   }
 
+  public static Summary createCountrySummary(List<DailyReportDto> dailyReportDtoList) {
+    Optional<DailyReportDto> latestRecord = dailyReportDtoList.stream()
+        .sorted(Comparator.comparing(DailyReportDto::getLastUpdated).reversed())
+        .findFirst();
+
+    Summary summary = Summary.builder().build();
+
+    if (latestRecord.isPresent()) {
+      DailyReportDto report = latestRecord.get();
+
+      summary = Summary.builder()
+          .totalConfirmed(report.getConfirmed())
+          .totalNewCases(report.getNewCases())
+          .totalDeaths(report.getDeaths())
+          .totalNewDeaths(report.getNewDeaths())
+          .build();
+
+    }
+
+    return summary;
+  }
+
   public static Summary createSummary(Collection<DailyReportDto> collection) {
     return Summary.builder()
         .totalConfirmed(collection.stream().mapToLong(value -> value.getConfirmed()).sum())
@@ -138,7 +161,7 @@ public class RecordUtil {
     return s;
   }
 
-  public static List<DailyReportDto> createDailyReportList(List<Record> records){
+  public static List<DailyReportDto> createDailyReportList(List<Record> records) {
     List<DailyReportDto> dailyReportDtos = new ArrayList<>();
 
     records.stream().forEach(record -> {
@@ -160,7 +183,7 @@ public class RecordUtil {
   public static Aggregation createAggregation(Object criteria, String matchBy, String sortBy, Optional<String> optGroupBy) {
     MatchOperation matchOperation = new MatchOperation(Criteria.where(matchBy).is(criteria));
 
-    if(optGroupBy.isPresent()){
+    if (optGroupBy.isPresent()) {
       GroupOperation groupOperation = group(optGroupBy.get())
           .first("country").as("country")
           .first("lastUpdated").as("lastUpdated")
@@ -176,14 +199,14 @@ public class RecordUtil {
           groupOperation,
           sort(Direction.DESC, sortBy)
       );
-    }
-    else{
+    } else {
       return newAggregation(
           matchOperation,
           sort(Direction.DESC, sortBy)
       );
     }
   }
+
 
   @Value("${external.resources.url}")
   public void setResourcesUrl(String url) {

@@ -66,7 +66,7 @@ public class ReportController {
 
     DailyReportDataDto dailyReportDataDto = DailyReportDataDto.builder()
         .dailyReportDtoList(dailyReportDtoList)
-        .summary(RecordUtil.createSummary(dailyReportDtoList))
+        .summary(RecordUtil.createCountrySummary(dailyReportDtoList))
         .build();
 
     response.setCode("200");
