@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +54,7 @@ public class UpdateController {
   }
 
   @Scheduled(cron = "0 0 5 * * *")
-  //@PostConstruct
+  @PostConstruct
   @GetMapping("/update")
   public String updateRecords() {
     log.info("update method called.");
