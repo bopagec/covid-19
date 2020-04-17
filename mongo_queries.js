@@ -41,3 +41,10 @@ db.getCollection('record').aggregate([
     }},
  {$sort:{_id: -1}}
 ])
+
+#check two fields are not matching
+db.getCollection('record').find({$where: "this.state != this.country"})
+
+db.getCollection('record').find(
+{$and:[{combinedKey: {$size:0}},{$where: "this.state != this.country"}]}
+)

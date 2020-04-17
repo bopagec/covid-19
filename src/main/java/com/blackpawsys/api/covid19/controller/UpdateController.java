@@ -36,7 +36,7 @@ public class UpdateController {
   private LocalDate startDate = LocalDate.of(2020, 01, 22);
   private LocalDate endDate = LocalDate.now();
   //private LocalDate startDate = LocalDate.of(2020, 04, 8);
-  //private LocalDate endDate = LocalDate.of(2020, 04, 10);
+  //private LocalDate endDate = LocalDate.of(2020, 01, 22);
 
   @Autowired
   private RestTemplate restTemplate;
@@ -109,6 +109,12 @@ public class UpdateController {
 
   private List<Record> aggregateStateToCountry(List<Record> records, LocalDate date) {
     List<Record> stateCountryList = new ArrayList<>();
+
+    records.stream().forEach(record -> {
+      if(record.getCountry().equalsIgnoreCase(record.getState()) && record.getCombinedKey().size() == 0){
+        record.setCombinedKey(Arrays.asList(record.getCountry()));
+      }
+    });
 
     Map<String, List<Record>> stateCountryMap = records.stream()
         .filter(record -> record.getCombinedKey().size() > 1)

@@ -8,7 +8,7 @@ spring.data.mongodb:
 
 overseas.territories: denmark,france,netherlands,united kingdom
 
-country.abbr.map: "{uk: 'United Kingdom'}"
+country.abbr.map: "{uk: 'United Kingdom', 'mainland china': 'China'}"
 
 external.resources.url: "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
 #logging.level.org.springframework.data.mongodb.core.MongoTemplate: DEBUG
