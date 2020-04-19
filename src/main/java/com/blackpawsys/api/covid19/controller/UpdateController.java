@@ -3,6 +3,7 @@ package com.blackpawsys.api.covid19.controller;
 import com.blackpawsys.api.covid19.Util.RecordUtil;
 import com.blackpawsys.api.covid19.model.Record;
 import com.blackpawsys.api.covid19.service.Covid19Service;
+import com.google.common.collect.Lists;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -13,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -35,7 +35,8 @@ public class UpdateController {
 
   private LocalDate startDate = LocalDate.of(2020, 01, 22);
   private LocalDate endDate = LocalDate.now();
-  //private LocalDate startDate = LocalDate.of(2020, 04, 8);
+
+  //private LocalDate startDate = LocalDate.of(2020, 04, 01);
   //private LocalDate endDate = LocalDate.of(2020, 01, 22);
 
   @Autowired
@@ -43,13 +44,12 @@ public class UpdateController {
 
   @GetMapping("/fetch")
   public String fetchAllRecords() {
-    log.info("fetchAllRecords method called.");
+    log.info("fetchAllRecords method called");
     dataService.deleteAll();
     log.info("all records deleted.");
     LocalDate currLocalDate = startDate;
 
     fetchAndSave(currLocalDate);
-
     return "done";
   }
 
@@ -89,11 +89,15 @@ public class UpdateController {
         });
 
         recordList.addAll(stateCountries);
-
+        // we need to partition the list to smaller size to avoid mongodb data base issues (MongoDB Atlass FREE account)
         updateRecordFields(recordList, date);
 
-        dataService.saveAll(recordList);
-        log.info("saved: {} records from {}", recordList.size(), date.toString());
+        List<List<Record>> listPartitios = Lists.partition(recordList, 100);
+
+        for (List partition : listPartitios) {
+          dataService.saveAll(partition);
+          log.info("saved: {} records from {}", partition.size(), date.toString());
+        }
 
       } catch (HttpClientErrorException e) {
         log.info(e.getMessage() + ":" + date.toString());
@@ -111,7 +115,7 @@ public class UpdateController {
     List<Record> stateCountryList = new ArrayList<>();
 
     records.stream().forEach(record -> {
-      if(record.getCountry().equalsIgnoreCase(record.getState()) && record.getCombinedKey().size() == 0){
+      if (record.getCountry().equalsIgnoreCase(record.getState()) && record.getCombinedKey().size() == 0) {
         record.setCombinedKey(Arrays.asList(record.getCountry()));
       }
     });
