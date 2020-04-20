@@ -1,8 +1,6 @@
 package com.blackpawsys.api.covid19.service;
 
 import com.blackpawsys.api.covid19.Util.RecordUtil;
-import com.blackpawsys.api.covid19.dto.DailyReportDto;
-import com.blackpawsys.api.covid19.dto.DailyReportDataDto;
 import com.blackpawsys.api.covid19.model.Record;
 import com.blackpawsys.api.covid19.repository.Covid19Repository;
 import java.time.LocalDate;

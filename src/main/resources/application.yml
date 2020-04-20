@@ -10,3 +10,8 @@ country.abbr.map: "{uk: 'United Kingdom', 'mainland china': 'China'}"
 external.resources.url: "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
 #logging.level.org.springframework.data.mongodb.core.MongoTemplate: DEBUG
 #logging.leve.root: DEBUG
+
+covid19.service.api:
+  user:
+    name: "${COVID_API_USERNAME}"
+    password: "${COVID_API_PASSWORD}"

@@ -8,13 +8,19 @@ import com.blackpawsys.api.covid19.model.Record;
 import com.blackpawsys.api.covid19.service.Covid19Service;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringTokenizer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.util.Base64Utils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,10 +32,23 @@ public class ReportController {
   @Autowired
   private Covid19Service dataService;
 
-  @GetMapping(value = {"/all", "/{optDate}"})
-  public Response<DailyReportDataDto> dailyRecord(@PathVariable Optional<String> optDate) {
-    String date = !optDate.isPresent() ? RecordUtil.FORMATTER.format(LocalDate.now().minusDays(1)) : optDate.get();
+  @Value("${covid19.service.api.user.name}")
+  private String userName;
 
+  @Value("${covid19.service.api.user.password}")
+  private String password;
+
+  @GetMapping(value = {"/all", "/{optDate}"})
+  public Response<DailyReportDataDto> dailyRecord(@PathVariable Optional<String> optDate, @RequestHeader(value = "Authorization") String token) {
+    boolean authenticated = isAuthenticated(token);
+
+    if (!authenticated) {
+      Response<DailyReportDataDto> response = new Response<>();
+      response.setCode(HttpStatus.UNAUTHORIZED.toString());
+      return response;
+    }
+
+    String date = !optDate.isPresent() ? RecordUtil.FORMATTER.format(LocalDate.now().minusDays(1)) : optDate.get();
     log.info("dailyRecord method called: {} ", date);
 
     Response<DailyReportDataDto> response = new Response<>();
@@ -45,6 +64,20 @@ public class ReportController {
     response.setPayload(dailyReportDataDto);
 
     return response;
+  }
+
+  private boolean isAuthenticated(String token) {
+    if (!token.startsWith("Basic ")) {
+      return false;
+    }
+
+    String encodedCredentials = token.substring(token.indexOf(" ") + 1, token.length());
+    byte[] decoded = Base64Utils.decode(encodedCredentials.getBytes(StandardCharsets.UTF_8));
+    String decodedCredentials = new String(decoded, StandardCharsets.UTF_8);
+    StringTokenizer stringTokenizer = new StringTokenizer(decodedCredentials, ":");
+
+    return stringTokenizer.nextToken().equals(userName) && stringTokenizer.nextToken().equals(password);
+
   }
 
   @GetMapping("/country/{country}")
