@@ -1,6 +1,8 @@
 server.port: 8081
 
-spring.data.mongodb:
-  host: localhost
-  port: 27017
-  database: covid-19
+spring.data.mongodb.uri: "mongodb+srv://admin:s54tsbbigQjGBI1A@blackpawsys-m0w0e.mongodb.net/covid-19?retryWrites=true&w=majority"
+
+#spring.data.mongodb:
+#  host: localhost
+#  port: 27017
+#  database: covid-19
