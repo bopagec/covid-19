@@ -1,6 +1,6 @@
 package com.blackpawsys.api.covid19.model;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,7 +20,7 @@ public class Record {
   private String state;
   private String country;
   private List<String> combinedKey;
-  private LocalDate lastUpdated;
+  private LocalDateTime lastUpdated;
   private Long confirmed;
   private Long deaths;
   private Long newCases;

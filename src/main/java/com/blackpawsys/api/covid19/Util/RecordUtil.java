@@ -9,7 +9,7 @@ import com.blackpawsys.api.covid19.dto.DailyReportDto;
 import com.blackpawsys.api.covid19.model.Record;
 import java.io.IOException;
 import java.io.StringReader;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,11 +45,11 @@ public class RecordUtil {
   private static Map<String, String> countryAbbrMap = new HashMap<>();
 
 
-  public static String createReportUrl(LocalDate currLocalDate) {
+  public static String createReportUrl(LocalDateTime currLocalDateTime) {
     StringBuilder sb = new StringBuilder();
 
     sb.append(resourcesUrl)
-        .append(currLocalDate.format(FORMATTER))
+        .append(currLocalDateTime.toLocalDate().format(FORMATTER))
         .append(".")
         .append(FILE_TYPE);
 
@@ -66,7 +66,7 @@ public class RecordUtil {
     return val;
   }
 
-  public static List<Record> parseRecord(String recordStr, LocalDate lastUpdate) throws IOException {
+  public static List<Record> parseRecord(String recordStr, LocalDateTime lastUpdated) throws IOException {
     StringReader in = new StringReader(removeUTF8BOM(recordStr));
     List<Record> recordList = new ArrayList<>();
 
@@ -110,7 +110,7 @@ public class RecordUtil {
             .combinedKey(combinedKeyList)
             .confirmed(confirmed)
             .deaths(deaths)
-            .lastUpdated(lastUpdate)
+            .lastUpdated(lastUpdated)
             .lat(lat)
             .longt(longt)
             .build();
@@ -182,6 +182,12 @@ public class RecordUtil {
 
   public static Aggregation createAggregation(Object criteria, String matchBy, String sortBy, Optional<String> optGroupBy) {
     MatchOperation matchOperation = new MatchOperation(Criteria.where(matchBy).is(criteria));
+
+    if(criteria instanceof LocalDateTime){
+      LocalDateTime startDateTime = (LocalDateTime) criteria;
+      LocalDateTime endDateTime = startDateTime.toLocalDate().atTime(23,00,00);
+      matchOperation = new MatchOperation(Criteria.where(matchBy).gte(startDateTime).lte(endDateTime));
+    }
 
     if (optGroupBy.isPresent()) {
       GroupOperation groupOperation = group(optGroupBy.get())

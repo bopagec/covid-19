@@ -5,8 +5,9 @@ import com.blackpawsys.api.covid19.model.Record;
 import com.blackpawsys.api.covid19.service.Covid19Service;
 import com.google.common.collect.Lists;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,11 +34,12 @@ public class UpdateController {
   @Autowired
   private Covid19Service dataService;
 
-  private LocalDate startDate = LocalDate.of(2020, 01, 22);
-  private LocalDate endDate = LocalDate.now();
+  private LocalDateTime startDate = LocalDateTime.of(2020, 01, 22, 23, 00, 00);
+  private LocalDateTime endDate = LocalDateTime.of(LocalDate.now(), LocalTime.of(23, 00, 00));
+  private static final int PARTITION_MAX_SIZE = 100;
 
-  //private LocalDate startDate = LocalDate.of(2020, 04, 01);
-  //private LocalDate endDate = LocalDate.of(2020, 01, 22);
+  //private LocalDateTime startDate = LocalDateTime.of(2020, 04, 19, 23, 00, 00);
+  //private LocalDateTime endDate = LocalDateTime.of(2020, 04, 20, 23, 00, 00);
 
   @Autowired
   private RestTemplate restTemplate;
@@ -47,9 +49,9 @@ public class UpdateController {
     log.info("fetchAllRecords method called");
     dataService.deleteAll();
     log.info("all records deleted.");
-    LocalDate currLocalDate = startDate;
+    LocalDateTime currLocalDateTime = startDate;
 
-    fetchAndSave(currLocalDate);
+    fetchAndSave(currLocalDateTime);
     return "done";
   }
 
@@ -61,7 +63,7 @@ public class UpdateController {
     Record record = dataService.findLatestRecord();
 
     if (record != null) {
-      if (record.getLastUpdated().isBefore(LocalDate.now())) {
+      if (record.getLastUpdated().isBefore(LocalDate.now().atStartOfDay())) {
         fetchAndSave(record.getLastUpdated().plusDays(1));
         return "records updated.";
       }
@@ -71,13 +73,14 @@ public class UpdateController {
     return "no new records found.";
   }
 
-  private void fetchAndSave(LocalDate currLocalDate) {
-    LocalDate date = currLocalDate;
+  private void fetchAndSave(LocalDateTime currLocalDateTime) {
+    LocalDateTime date = currLocalDateTime;
 
     while (date.isBefore(endDate) || date.isEqual(endDate)) {
 
       try {
-        String recordStr = restTemplate.getForObject(RecordUtil.createReportUrl(date), String.class);
+        String reportUrl = RecordUtil.createReportUrl(date);
+        String recordStr = restTemplate.getForObject(reportUrl, String.class);
         List<Record> recordList = RecordUtil.parseRecord(recordStr, date);
 
         List<Record> stateCountries = aggregateStateToCountry(recordList, date);
@@ -92,7 +95,7 @@ public class UpdateController {
         // we need to partition the list to smaller size to avoid mongodb data base issues (MongoDB Atlass FREE account)
         updateRecordFields(recordList, date);
 
-        List<List<Record>> listPartitios = Lists.partition(recordList, 100);
+        List<List<Record>> listPartitios = Lists.partition(recordList, PARTITION_MAX_SIZE);
 
         for (List partition : listPartitios) {
           dataService.saveAll(partition);
@@ -103,15 +106,15 @@ public class UpdateController {
         log.info(e.getMessage() + ":" + date.toString());
       } catch (FileNotFoundException fne) {
         log.info(fne.getMessage());
-      } catch (IOException ioe) {
-        log.info(ioe.getMessage());
+      } catch (Exception e) {
+        log.info(e.getMessage());
       } finally {
         date = date.plusDays(1);
       }
     }
   }
 
-  private List<Record> aggregateStateToCountry(List<Record> records, LocalDate date) {
+  private List<Record> aggregateStateToCountry(List<Record> records, LocalDateTime date) {
     List<Record> stateCountryList = new ArrayList<>();
 
     records.stream().forEach(record -> {
@@ -178,7 +181,7 @@ public class UpdateController {
         .allMatch(e -> e.getValue().equals(oldRecordMap.get(e.getKey())));
   }
 
-  public List<Record> updateRecordFields(List<Record> records, LocalDate date) {
+  public List<Record> updateRecordFields(List<Record> records, LocalDateTime date) {
     List<Record> prevRecords = dataService.findByDate(date.minusDays(1), Optional.empty());
 
     if (!prevRecords.isEmpty()) {

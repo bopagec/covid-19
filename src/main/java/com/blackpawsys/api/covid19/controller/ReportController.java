@@ -52,7 +52,7 @@ public class ReportController {
     log.info("dailyRecord method called: {} ", date);
 
     Response<DailyReportDataDto> response = new Response<>();
-    List<Record> records = dataService.findByDate(LocalDate.parse(date, RecordUtil.FORMATTER), Optional.of("country"));
+    List<Record> records = dataService.findByDate(LocalDate.parse(date, RecordUtil.FORMATTER).atStartOfDay(), Optional.of("country"));
     List<DailyReportDto> dailyReportDtoList = RecordUtil.createDailyReportList(records);
 
     DailyReportDataDto dailyReportDataDto = DailyReportDataDto.builder()
