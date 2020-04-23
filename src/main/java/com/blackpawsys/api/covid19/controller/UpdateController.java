@@ -192,10 +192,10 @@ public class UpdateController {
           Map<String, Object> prevValueMap = valueMap(prevRec, true);
 
           if (validateValueMaps(newValueMap, prevValueMap)) {
-            if (record.getConfirmed() != null && prevRec.getConfirmed() != null) {
+            if (record.getConfirmed() != null && prevRec.getConfirmed() != null && (record.getConfirmed() - prevRec.getConfirmed() > 0)) {
               record.setNewCases(record.getConfirmed() - prevRec.getConfirmed());
             }
-            if (record.getDeaths() != null && prevRec.getDeaths() != null) {
+            if (record.getDeaths() != null && prevRec.getDeaths() != null && (record.getDeaths() - prevRec.getDeaths() > 0)) {
               record.setNewDeaths(record.getDeaths() - prevRec.getDeaths());
             }
             break;

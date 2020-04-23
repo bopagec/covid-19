@@ -183,9 +183,9 @@ public class RecordUtil {
   public static Aggregation createAggregation(Object criteria, String matchBy, String sortBy, Optional<String> optGroupBy) {
     MatchOperation matchOperation = new MatchOperation(Criteria.where(matchBy).is(criteria));
 
-    if(criteria instanceof LocalDateTime){
+    if (criteria instanceof LocalDateTime) {
       LocalDateTime startDateTime = (LocalDateTime) criteria;
-      LocalDateTime endDateTime = startDateTime.toLocalDate().atTime(23,00,00);
+      LocalDateTime endDateTime = startDateTime.toLocalDate().atTime(23, 00, 00);
       matchOperation = new MatchOperation(Criteria.where(matchBy).gte(startDateTime).lte(endDateTime));
     }
 
