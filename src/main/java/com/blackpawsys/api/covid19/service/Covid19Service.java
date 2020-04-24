@@ -1,5 +1,6 @@
 package com.blackpawsys.api.covid19.service;
 
+import com.blackpawsys.api.covid19.dto.WorldGraphDataDto;
 import com.blackpawsys.api.covid19.model.Record;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,4 +17,6 @@ public interface Covid19Service {
   List<Record> findByDate(LocalDateTime date, Optional<String> optGroupBy);
 
   List<Record> findByCountry(String country);
+
+  List<WorldGraphDataDto> generateWorldGraphData(LocalDateTime date);
 }

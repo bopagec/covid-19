@@ -4,12 +4,14 @@ import com.blackpawsys.api.covid19.Util.RecordUtil;
 import com.blackpawsys.api.covid19.component.Response;
 import com.blackpawsys.api.covid19.dto.DailyReportDataDto;
 import com.blackpawsys.api.covid19.dto.DailyReportDto;
+import com.blackpawsys.api.covid19.dto.WorldGraphDataDto;
 import com.blackpawsys.api.covid19.model.Record;
 import com.blackpawsys.api.covid19.service.Covid19Service;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringTokenizer;
@@ -50,14 +52,18 @@ public class ReportController {
 
     String date = !optDate.isPresent() ? RecordUtil.FORMATTER.format(LocalDate.now().minusDays(1)) : optDate.get();
     log.info("dailyRecord method called: {} ", date);
-
+    LocalDateTime dateTime = LocalDate.parse(date, RecordUtil.FORMATTER).atStartOfDay();
     Response<DailyReportDataDto> response = new Response<>();
-    List<Record> records = dataService.findByDate(LocalDate.parse(date, RecordUtil.FORMATTER).atStartOfDay(), Optional.of("country"));
+
+    List<Record> records = dataService.findByDate(dateTime, Optional.of("country"));
+    List<WorldGraphDataDto> worldGraphData = dataService.generateWorldGraphData(dateTime);
+
     List<DailyReportDto> dailyReportDtoList = RecordUtil.createDailyReportList(records);
 
     DailyReportDataDto dailyReportDataDto = DailyReportDataDto.builder()
         .dailyReportDtoList(dailyReportDtoList)
         .summary(RecordUtil.createSummary(dailyReportDtoList))
+        .worldGraphData(worldGraphData)
         .build();
 
     response.setCode("200");

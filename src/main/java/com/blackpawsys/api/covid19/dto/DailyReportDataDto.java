@@ -18,5 +18,6 @@ import org.springframework.stereotype.Component;
 public class DailyReportDataDto {
 
   private List<DailyReportDto> dailyReportDtoList;
+  private List<WorldGraphDataDto> worldGraphData;
   private Summary summary;
 }

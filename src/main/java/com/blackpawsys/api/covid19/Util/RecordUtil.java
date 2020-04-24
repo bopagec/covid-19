@@ -179,6 +179,20 @@ public class RecordUtil {
 
     return dailyReportDtos;
   }
+  public static Aggregation createWorldGraphDataAggregation(LocalDateTime dateTime){
+    LocalDateTime endDateTime = dateTime.toLocalDate().atTime(23, 00, 00);
+    MatchOperation matchOperation = new MatchOperation(Criteria.where("lastUpdated").gte(LocalDateTime.now().minusMonths(2)).lte(endDateTime));
+
+    GroupOperation groupOperation = group("lastUpdated")
+        .first("lastUpdated").as("lastUpdated")
+        .sum("newCases").as("newCases")
+        .sum("newDeaths").as("newDeaths");
+
+    return newAggregation(
+        matchOperation,
+        groupOperation,
+        sort(Direction.ASC, "lastUpdated" ));
+  }
 
   public static Aggregation createAggregation(Object criteria, String matchBy, String sortBy, Optional<String> optGroupBy) {
     MatchOperation matchOperation = new MatchOperation(Criteria.where(matchBy).is(criteria));

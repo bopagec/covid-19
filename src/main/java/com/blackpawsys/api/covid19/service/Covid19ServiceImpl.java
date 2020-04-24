@@ -1,6 +1,7 @@
 package com.blackpawsys.api.covid19.service;
 
 import com.blackpawsys.api.covid19.Util.RecordUtil;
+import com.blackpawsys.api.covid19.dto.WorldGraphDataDto;
 import com.blackpawsys.api.covid19.model.Record;
 import com.blackpawsys.api.covid19.repository.Covid19Repository;
 import java.time.LocalDateTime;
@@ -56,6 +57,17 @@ public class Covid19ServiceImpl implements Covid19Service {
     List<Record> results = aggregate.getMappedResults();
 
     return results;
+  }
+
+  @Override
+  public List<WorldGraphDataDto> generateWorldGraphData(LocalDateTime date) {
+    Aggregation aggregation = RecordUtil.createWorldGraphDataAggregation(date);
+
+    AggregationResults<WorldGraphDataDto> aggregate = mongoTemplate.aggregate(aggregation, Record.class, WorldGraphDataDto.class);
+
+    List<WorldGraphDataDto> mappedResults = aggregate.getMappedResults();
+
+    return  mappedResults;
   }
 
 }
