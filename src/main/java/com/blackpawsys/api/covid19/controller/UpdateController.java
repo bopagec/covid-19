@@ -55,7 +55,7 @@ public class UpdateController {
     return "done";
   }
 
-  @Scheduled(cron = "0 0 5 * * *")
+  @Scheduled(cron = "0 30 5 * * *") // start at 5:30 AM
   @PostConstruct
   @GetMapping("/update")
   public String updateRecords() {
