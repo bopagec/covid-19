@@ -110,7 +110,7 @@ public class UpdateController {
           total += partition.size();
         }
 
-        mail.sendMail(email, "SUCCESS!" + ". Records updated: " + total + " for " + date.toString() , "SUCCESS UPDATE RECORDS");
+        mail.sendMail(email, "SUCCESS!" + ". Records updated: " + total + " for " + date.toString() , "RECORD UPDATES SUCCEEDED");
 
       } catch (HttpClientErrorException e) {
         mail.sendMail(email, e.getMessage() + date.toString(), "HttpClientErrorException occurred during fetchAndSave");
