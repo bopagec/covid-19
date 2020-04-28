@@ -17,3 +17,6 @@ covid19.service.api:
   user:
     name: "${COVID_API_USERNAME}"
     password: "${COVID_API_PASSWORD}"
+
+app.notifications.email:
+  address: 'charatha@gmail.com'

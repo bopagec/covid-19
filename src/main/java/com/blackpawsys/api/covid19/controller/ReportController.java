@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringTokenizer;
+
+import com.blackpawsys.mail.Mail;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +42,11 @@ public class ReportController {
   @Value("${covid19.service.api.user.password}")
   private String password;
 
+  @Value("${app.notifications.email.address}")
+  private String email;
+
+  private Mail mail = new Mail();
+
   @GetMapping(value = {"/all", "/{optDate}"})
   public Response<DailyReportDataDto> dailyRecord(@PathVariable Optional<String> optDate, @RequestHeader(value = "Authorization") String token) {
     boolean authenticated = isAuthenticated(token);
@@ -47,6 +54,7 @@ public class ReportController {
     if (!authenticated) {
       Response<DailyReportDataDto> response = new Response<>();
       response.setCode(HttpStatus.UNAUTHORIZED.toString());
+      mail.sendMail(email, "AUTHENTICATION FAILED for the API", "AUTHENTICATION FAILED");
       return response;
     }
 

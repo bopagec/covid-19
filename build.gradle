@@ -38,6 +38,12 @@ dependencies {
 
 	compile group: 'io.springfox', name: 'springfox-swagger2', version: '2.7.0'
 	compile group: 'io.springfox', name: 'springfox-swagger-ui', version: '2.7.0'
+
+	// BlackpawSys mail utility class
+	compile fileTree(dir: 'libs', include: ['*.jar'])
+
+	// https://mvnrepository.com/artifact/com.sun.mail/javax.mail
+	compile group: 'com.sun.mail', name: 'javax.mail', version: '1.6.2'
 }
 
 test {

@@ -3,6 +3,7 @@ package com.blackpawsys.api.covid19.controller;
 import com.blackpawsys.api.covid19.Util.RecordUtil;
 import com.blackpawsys.api.covid19.model.Record;
 import com.blackpawsys.api.covid19.service.Covid19Service;
+import com.blackpawsys.mail.Mail;
 import com.google.common.collect.Lists;
 import java.io.FileNotFoundException;
 import java.time.LocalDate;
@@ -19,6 +20,7 @@ import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,9 +36,13 @@ public class UpdateController {
   @Autowired
   private Covid19Service dataService;
 
+  @Value("${app.notifications.email.address}")
+  private String email;
+
   private LocalDateTime startDate = LocalDateTime.of(2020, 01, 22, 23, 00, 00);
   private LocalDateTime endDate = LocalDateTime.of(LocalDate.now(), LocalTime.of(23, 00, 00));
   private static final int PARTITION_MAX_SIZE = 100;
+  private Mail mail = new Mail();
 
   //private LocalDateTime startDate = LocalDateTime.of(2020, 04, 19, 23, 00, 00);
   //private LocalDateTime endDate = LocalDateTime.of(2020, 04, 20, 23, 00, 00);
@@ -95,18 +101,25 @@ public class UpdateController {
         // we need to partition the list to smaller size to avoid mongodb data base issues (MongoDB Atlass FREE account)
         updateRecordFields(recordList, date);
 
-        List<List<Record>> listPartitios = Lists.partition(recordList, PARTITION_MAX_SIZE);
+        List<List<Record>> listPartitions = Lists.partition(recordList, PARTITION_MAX_SIZE);
+        int total = 0;
 
-        for (List partition : listPartitios) {
+        for (List partition : listPartitions) {
           dataService.saveAll(partition);
           log.info("saved: {} records from {}", partition.size(), date.toString());
+          total += partition.size();
         }
 
+        mail.sendMail(email, "SUCCESS!" + ". Records updated: " + total + " for " + date.toString() , "SUCCESS UPDATE RECORDS");
+
       } catch (HttpClientErrorException e) {
+        mail.sendMail(email, e.getMessage() + date.toString(), "HttpClientErrorException occurred during fetchAndSave");
         log.info(e.getMessage() + ":" + date.toString());
       } catch (FileNotFoundException fne) {
+        mail.sendMail(email, fne.getMessage(), "FileNotFoundException occurred during fetchAndSave");
         log.info(fne.getMessage());
       } catch (Exception e) {
+        mail.sendMail(email, e.getMessage(), "Exception occurred during fetchAndSave");
         log.info(e.getMessage());
       } finally {
         date = date.plusDays(1);
