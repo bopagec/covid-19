@@ -48,3 +48,14 @@ db.getCollection('record').find({$where: "this.state != this.country"})
 db.getCollection('record').find(
 {$and:[{combinedKey: {$size:0}},{$where: "this.state != this.country"}]}
 )
+
+// manual update query
+db.getCollection('record').find({country:"France"}).sort({lastUpdated:-1})
+db.getCollection('record').updateOne({"_id" : ObjectId("5ec5f61bf47c6f0e4528d761")},{
+    $set:{
+        "newCases" : NumberLong(882),
+        "newDeaths" : NumberLong(46),
+        "confirmed" : NumberLong(180809),
+        "deaths" : NumberLong(28022)
+        }
+})

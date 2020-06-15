@@ -100,7 +100,8 @@ public class RecordUtil {
           combinedKeyList = Stream.of(keys).filter(key -> !StringUtils.isEmpty(key)).collect(Collectors.toList());
         }
 
-        if (!StringUtils.isEmpty(state) && overseasTerritories.contains(country.toLowerCase())) {
+        if (!StringUtils.isEmpty(state) && overseasTerritories.contains(country.toLowerCase())
+                && !state.equalsIgnoreCase("wales") && !state.equalsIgnoreCase("Scotland") && !state.equalsIgnoreCase("england")) {
           country = state;
         }
 
