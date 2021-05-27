@@ -1,15 +1,15 @@
-#spring.profiles.active: 'local'
+spring.profiles.active: 'local'
 spring.application.name: 'covid-19-api'
 server.port: '8080'
 
 #spring.data.mongodb.uri: "mongodb+srv://admin:s54tsbbigQjGBI1A@blackpawsys-m0w0e.mongodb.net/covid-19?retryWrites=true&w=majority"
-spring.data.mongodb.uri: "${MONGODB_URL}"
+#spring.data.mongodb.uri: "${MONGODB_URL}"
 
 overseas.territories: 'denmark,france,netherlands,united kingdom'
 
 country.abbr.map: "{uk: 'United Kingdom', 'mainland china': 'China'}"
 
-external.resources.url: "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
+external.resources.url: "https://raw.github.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"
 #logging.level.org.springframework.data.mongodb.core.MongoTemplate: DEBUG
 #logging.leve.root: DEBUG
 
