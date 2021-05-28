@@ -50,11 +50,16 @@ db.getCollection('record').find(
 )
 
 // manual update query
-db.getCollection('record').find({country:"France"}).sort({lastUpdated:-1})
-db.getCollection('record').updateOne({"_id" : ObjectId("5ec5f61bf47c6f0e4528d761")},{
+// you have to open Robo 3T and do not use the MongoDB Atlas replicaset 
+// but use the covid-19 database directily in the MongoDB Atlass in the Robo 3T 
+// double click on record collection in the MongoDB Atlas 
+// otherwise it will cause WriteCommandError: not master mongodb
+db.getCollection('record').find({country:"India"}).sort({lastUpdated:-1})
+db.getCollection('record').find({country:"Spain"}).sort({lastUpdated:-1})
+db.getCollection('record').updateOne({"_id" : ObjectId("607919d40d22d0673386303b")},{
     $set:{
-        "newCases" : NumberLong(882),
-        "newDeaths" : NumberLong(46),
+        "newCases" : NumberLong(216850),
+        "newDeaths" : NumberLong(1183),
         "confirmed" : NumberLong(180809),
         "deaths" : NumberLong(28022)
         }

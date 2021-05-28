@@ -44,6 +44,9 @@ dependencies {
 
 	// https://mvnrepository.com/artifact/com.sun.mail/javax.mail
 	compile group: 'com.sun.mail', name: 'javax.mail', version: '1.6.2'
+	// https://mvnrepository.com/artifact/org.openjfx/javafx
+	compile group: 'org.openjfx', name: 'javafx', version: '11', ext: 'pom'
+
 }
 
 test {
